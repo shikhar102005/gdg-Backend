@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -203,48 +204,82 @@ func (s *PostgresStore) InsertReadingBatch(ctx context.Context, readings []model
 		[]string{"sensor_id", "observed_at", "received_at", "metric_type", "value", "quality", "idempotency_key", "metadata"},
 		pgx.CopyFromRows(rows),
 	)
+	if err == nil {
+		s.asyncUpdateSensorLastSeen(sensorLastSeenMap)
+		return int(copyCount), nil
+	}
+
+	// Fallback to high-speed chunked multi-row INSERT (compatible with PgBouncer & transaction poolers)
+	inserted, err := s.insertMultiRow(ctx, readings)
 	if err != nil {
-		// Fallback to batched INSERT with ON CONFLICT DO NOTHING to handle idempotency conflicts cleanly
-		return s.insertBatchWithConflictCheck(ctx, readings)
+		log.Printf("[store] insertMultiRow failed: %v", err)
+		return inserted, err
 	}
-
-	// Update last_seen_at for touched sensors
-	for sensorID, lastSeen := range sensorLastSeenMap {
-		_ = s.UpdateSensorLastSeen(ctx, sensorID, lastSeen)
-	}
-
-	return int(copyCount), nil
+	s.asyncUpdateSensorLastSeen(sensorLastSeenMap)
+	return inserted, nil
 }
 
-func (s *PostgresStore) insertBatchWithConflictCheck(ctx context.Context, readings []models.Reading) (int, error) {
-	batch := &pgx.Batch{}
-	query := `
-		INSERT INTO readings (sensor_id, observed_at, received_at, metric_type, value, quality, idempotency_key, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		ON CONFLICT (sensor_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
-	`
-
-	for _, r := range readings {
-		metaJSON, _ := json.Marshal(r.Metadata)
-		var idemp *string
-		if r.IdempotencyKey != "" {
-			k := r.IdempotencyKey
-			idemp = &k
+func (s *PostgresStore) asyncUpdateSensorLastSeen(m map[string]time.Time) {
+	if len(m) == 0 {
+		return
+	}
+	go func(touched map[string]time.Time) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		batch := &pgx.Batch{}
+		for sid, ls := range touched {
+			batch.Queue(`UPDATE sensors SET last_seen_at = $2, status = 'active', updated_at = NOW() WHERE id = $1`, sid, ls)
 		}
-		batch.Queue(query, r.SensorID, r.ObservedAt, r.ReceivedAt, r.MetricType, r.Value, r.Quality, idemp, metaJSON)
+		br := s.pool.SendBatch(bgCtx, batch)
+		_ = br.Close()
+	}(m)
+}
+
+func (s *PostgresStore) insertMultiRow(ctx context.Context, readings []models.Reading) (int, error) {
+	if len(readings) == 0 {
+		return 0, nil
 	}
 
-	br := s.pool.SendBatch(ctx, batch)
-	defer br.Close()
+	chunkSize := 500
+	totalInserted := 0
 
-	accepted := 0
-	for range readings {
-		ct, err := br.Exec()
-		if err == nil && ct.RowsAffected() > 0 {
-			accepted++
+	for i := 0; i < len(readings); i += chunkSize {
+		end := i + chunkSize
+		if end > len(readings) {
+			end = len(readings)
 		}
+		chunk := readings[i:end]
+
+		var sb strings.Builder
+		sb.WriteString("INSERT INTO readings (sensor_id, observed_at, received_at, metric_type, value, quality, idempotency_key, metadata) VALUES ")
+		args := make([]interface{}, 0, len(chunk)*8)
+
+		paramIdx := 1
+		for j, r := range chunk {
+			if j > 0 {
+				sb.WriteString(", ")
+			}
+			metaJSON, _ := json.Marshal(r.Metadata)
+			var idemp *string
+			if r.IdempotencyKey != "" {
+				k := r.IdempotencyKey
+				idemp = &k
+			}
+			fmt.Fprintf(&sb, "($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+				paramIdx, paramIdx+1, paramIdx+2, paramIdx+3, paramIdx+4, paramIdx+5, paramIdx+6, paramIdx+7)
+			args = append(args, r.SensorID, r.ObservedAt, r.ReceivedAt, r.MetricType, r.Value, r.Quality, idemp, metaJSON)
+			paramIdx += 8
+		}
+		sb.WriteString(" ON CONFLICT (sensor_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING")
+
+		ct, err := s.pool.Exec(ctx, sb.String(), args...)
+		if err != nil {
+			return totalInserted, fmt.Errorf("multi-row insert failed: %w", err)
+		}
+		totalInserted += int(ct.RowsAffected())
 	}
-	return accepted, nil
+
+	return totalInserted, nil
 }
 
 func (s *PostgresStore) GetSensorReadings(ctx context.Context, sensorID string, limit int, since *time.Time) ([]models.Reading, error) {

@@ -24,6 +24,8 @@ type IngestionService struct {
 	alertChan    chan ReadingWithSensor
 	stopChan     chan struct{}
 	wg           sync.WaitGroup
+	sensorCache  sync.Map
+	provisionMu  sync.Mutex
 }
 
 func NewIngestionService(s store.Store, evaluator *alerts.Evaluator, maxBatchSize int, queueBuffer int, workers int) *IngestionService {
@@ -43,6 +45,14 @@ func NewIngestionService(s store.Store, evaluator *alerts.Evaluator, maxBatchSiz
 		maxBatchSize: maxBatchSize,
 		alertChan:    make(chan ReadingWithSensor, queueBuffer),
 		stopChan:     make(chan struct{}),
+	}
+
+	// Pre-populate sensorCache from existing sensors in store
+	sensors, err := s.ListSensors(context.Background(), "", "", "")
+	if err == nil {
+		for i := range sensors {
+			svc.sensorCache.Store(sensors[i].ID, &sensors[i])
+		}
 	}
 
 	// Start background alert workers
@@ -215,8 +225,21 @@ func (s *IngestionService) IngestBatch(ctx context.Context, req *models.BatchIng
 }
 
 func (s *IngestionService) ensureSensorExists(ctx context.Context, sensorID, metricType string) (*models.Sensor, error) {
+	if val, ok := s.sensorCache.Load(sensorID); ok {
+		return val.(*models.Sensor), nil
+	}
+
+	s.provisionMu.Lock()
+	defer s.provisionMu.Unlock()
+
+	// Double check cache after acquiring lock
+	if val, ok := s.sensorCache.Load(sensorID); ok {
+		return val.(*models.Sensor), nil
+	}
+
 	sen, err := s.store.GetSensor(ctx, sensorID)
 	if err == nil && sen != nil {
+		s.sensorCache.Store(sensorID, sen)
 		return sen, nil
 	}
 
@@ -251,5 +274,6 @@ func (s *IngestionService) ensureSensorExists(ctx context.Context, sensorID, met
 	}
 
 	_ = s.store.UpsertSensor(ctx, newSensor)
+	s.sensorCache.Store(sensorID, newSensor)
 	return newSensor, nil
 }

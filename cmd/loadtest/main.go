@@ -59,8 +59,24 @@ func main() {
 			MaxConnsPerHost:     500,
 			IdleConnTimeout:     90 * time.Second,
 		},
-		Timeout: 10 * time.Second,
+		Timeout: 30 * time.Second,
 	}
+
+	// Pre-warm benchmark sensors to populate backend cache
+	log.Println("[benchmark] Pre-warming benchmark sensors...")
+	warmupBatch := make([]models.IngestReadingRequest, len(sensorIDs))
+	now := time.Now().UTC()
+	for i, sid := range sensorIDs {
+		warmupBatch[i] = models.IngestReadingRequest{
+			SensorID:  sid,
+			Type:      metricTypes[i%len(metricTypes)],
+			Value:     22.5,
+			Timestamp: now.Format(time.RFC3339),
+			Quality:   "warmup",
+		}
+	}
+	_, _ = sendBatchRequest(client, *targetURL, warmupBatch)
+	log.Println("[benchmark] Pre-warm complete.")
 
 	var totalReadingsSubmitted int64
 	var totalReadingsAccepted int64
