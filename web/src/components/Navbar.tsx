@@ -48,6 +48,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     setUser(null);
   };
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshClick = () => {
+    setIsRefreshing(true);
+    onRefresh();
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
+
   const navItems = [
     { id: 'overview', label: 'Overview', icon: Gauge },
     { id: 'sensors', label: 'Sensors Fleet', icon: Cpu },
@@ -60,58 +68,68 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header className="retro-header">
-        {/* Top Navbar Row matching Original Layout with Google Palette */}
-        <div className="retro-top-bar">
-          {/* Left: Hex badge + Overview View button */}
-          <div className="retro-brand-group">
-            <div className="retro-hex-logo" title="Campus Sensor Hub">
-              ⬡
+        <div className="command-navbar">
+          {/* Brand Identity */}
+          <div className="command-brand" onClick={() => setActiveTab('overview')} role="button" tabIndex={0}>
+            <div className="command-logo-icon">
+              <Activity size={20} color="#ffffff" strokeWidth={2.5} />
             </div>
-            <button
-              onClick={() => setActiveTab('overview')}
-              className="retro-pill-btn yellow"
-            >
-              Overview View
-            </button>
+            <div className="command-brand-text">
+              <div className="command-title-row">
+                <span className="command-brand-title">CampusPulse</span>
+                <span className="command-live-indicator" title="Connected to continuous telemetry stream">
+                  <span className="command-live-dot" /> LIVE
+                </span>
+              </div>
+              <span className="command-brand-subtitle">IoT Facility Telemetry</span>
+            </div>
           </div>
 
-          {/* Center: Notice banner pill matching Original Layout */}
-          <div className="retro-banner-pill">
-            <span>📡 Telemetry Stream Active: Continuous Ingestion to Supabase</span>
-            <button
-              onClick={onRefresh}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 0.25rem',
-              }}
-              title="Refresh telemetry"
-            >
-              <RefreshCw size={13} />
-            </button>
-          </div>
+          {/* Unified Primary Navigation Tabs */}
+          <nav className="command-nav-tabs">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              const isAlertTab = item.id === 'alerts';
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`command-nav-item ${isActive ? 'active' : ''} ${isAlertTab && activeAlertsCount > 0 ? 'has-alerts' : ''}`}
+                >
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="command-alert-badge">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* Right: Active Alerts button + Log In button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          {/* Operational Controls & Auth */}
+          <div className="command-controls">
             <button
-              onClick={() => setActiveTab('alerts')}
-              className="retro-pill-btn coral"
+              onClick={handleRefreshClick}
+              className="command-refresh-pill"
+              title={`Last synchronized: ${lastUpdated.toLocaleTimeString()}`}
             >
-              Active Alerts {activeAlertsCount > 0 ? `(${activeAlertsCount})` : ''}
+              <RefreshCw size={13} className={isRefreshing ? 'spin-anim' : ''} />
+              <span>Sync</span>
             </button>
 
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="retro-badge active" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>
-                  <Shield size={12} style={{ marginRight: '0.25rem' }} /> {user.email.split('@')[0]}
+              <div className="command-user-group">
+                <span className="command-user-badge">
+                  <Shield size={12} />
+                  <span>{user.email.split('@')[0]}</span>
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="retro-pill-btn"
-                  style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+                  className="command-logout-btn"
+                  title="Sign out of organizer account"
                 >
                   Log Out
                 </button>
@@ -119,46 +137,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="retro-pill-btn green"
+                className="command-login-btn"
               >
-                Log In
+                Organizer Log In
               </button>
             )}
           </div>
         </div>
-
-        {/* Bottom Navigation Pills Row (Original Layout) */}
-        <nav className="retro-nav-tabs">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`retro-nav-tab ${isActive ? 'active' : ''}`}
-              >
-                <Icon size={15} />
-                <span>{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    style={{
-                      background: isActive ? '#ffffff' : '#ea4335',
-                      color: isActive ? '#ea4335' : '#ffffff',
-                      borderRadius: '9999px',
-                      padding: '1px 7px',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      marginLeft: '0.2rem',
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
       </header>
 
       {/* Login Modal */}

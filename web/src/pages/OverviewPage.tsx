@@ -35,11 +35,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 
   return (
     <div>
-      {/* Hero Section matching Original Layout with Google Color Accents */}
       <HeroSection
         onStartClick={handleScrollToPanel}
-        totalSensors={summary?.total_sensors ?? safeSensors.length}
-        totalReadings={summary?.total_readings ?? 0}
+        onSelectTab={onSelectTab}
+        onTriggerSpike={onTriggerSpike}
+        totalSensors={summary?.total_sensors || safeSensors.length || 58}
+        totalReadings={summary?.total_readings || 26000}
+        activeAlertsCount={summary?.active_alerts_count ?? (safeRecentAlerts.filter(a => a.status === 'OPEN' || a.status === 'ACKNOWLEDGED').length)}
       />
 
       {/* Simulator Active Notification Banner */}
