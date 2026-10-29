@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 
 :root {
-  /* Google Themed Palette applied to the playful layout */
-  --bg-retro: #f8fafd;
-  --bg-retro-panel: #e8f0fe;
-  --bg-card: #ffffff;
-  --bg-card-alt: #f8fafc;
+  /* Google Themed Palette with Subtle Warm Collegiate Undertones */
+  --bg-retro: #faf7f2;
+  --bg-retro-panel: #f3ece2;
+  --bg-card: #fefdfa;
+  --bg-card-alt: #f6f0e6;
   --border-black: #202124;
   
   /* Google 4-Color Signature Palette */
@@ -29,7 +29,7 @@
   --retro-coral-hover: #ea4335;
   --retro-purple: #e8eaed;
   --retro-purple-hover: #dadce0;
-  --retro-cream: #ffffff;
+  --retro-cream: #fefdfa;
 
   --text-main: #202124;
   --text-muted: #3c4043;
@@ -51,7 +51,7 @@
 body {
   font-family: 'Space Grotesk', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--bg-retro);
-  background-image: radial-gradient(rgba(66, 133, 244, 0.16) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(rgba(175, 140, 95, 0.13) 1.5px, transparent 1.5px);
   background-size: 20px 20px;
   color: var(--text-main);
   line-height: 1.5;
@@ -78,7 +78,7 @@ code, pre, .font-mono {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  background: #ffffff;
+  background: var(--bg-card);
   border: 2.5px solid #202124;
   border-radius: 18px;
   padding: 0.55rem 1.15rem;
@@ -182,7 +182,7 @@ code, pre, .font-mono {
   padding: 0.4rem 0.8rem;
   border: 2px solid #202124;
   border-radius: 9999px;
-  background: #ffffff;
+  background: var(--bg-card);
   color: #202124;
   font-size: 0.82rem;
   font-weight: 700;
@@ -195,7 +195,7 @@ code, pre, .font-mono {
 .command-nav-item:hover {
   transform: translate(-1px, -1px);
   box-shadow: var(--shadow-retro);
-  background: #f8fafd;
+  background: #fbf5ec;
 }
 
 .command-nav-item.active {
@@ -256,7 +256,7 @@ code, pre, .font-mono {
   padding: 0.42rem 1.15rem;
   border: 2px solid #202124;
   border-radius: 9999px;
-  background: #ffffff;
+  background: var(--bg-card);
   color: #202124;
   font-size: 0.82rem;
   font-weight: 700;
@@ -697,7 +697,7 @@ code, pre, .font-mono {
 
 /* Inner white rounded panel */
 .retro-inner-panel {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 2px solid #202124;
   border-radius: 16px;
   box-shadow: var(--shadow-retro);
@@ -719,7 +719,7 @@ code, pre, .font-mono {
   padding: 0.3rem 0.95rem;
   font-size: 0.78rem;
   font-weight: 700;
-  background: #ffffff;
+  background: var(--bg-card);
   color: #202124;
   cursor: pointer;
   box-shadow: var(--shadow-retro-sm);
@@ -730,6 +730,7 @@ code, pre, .font-mono {
 .filter-pill:hover {
   transform: translate(-1px, -1px);
   box-shadow: var(--shadow-retro);
+  background: #fbf5ec;
 }
 
 .filter-pill.active {
@@ -741,7 +742,7 @@ code, pre, .font-mono {
 .retro-pill-input {
   border: 2px solid #202124;
   border-radius: 9999px;
-  background: #ffffff;
+  background: var(--bg-card);
   padding: 0.45rem 1rem;
   font-size: 0.85rem;
   font-weight: 600;
@@ -773,11 +774,12 @@ code, pre, .font-mono {
 }
 
 .retro-column-box {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 2px solid #202124;
   border-radius: 16px;
   padding: 1.25rem;
   min-height: 380px;
+  max-height: 520px;
   display: flex;
   flex-direction: column;
 }
@@ -801,7 +803,7 @@ code, pre, .font-mono {
 }
 
 .retro-metric-card {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 2.5px solid #202124;
   border-radius: 16px;
   box-shadow: var(--shadow-retro-md);
@@ -991,7 +993,7 @@ code, pre, .font-mono {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-retro-sm);
-  background: #ffffff;
+  background: var(--bg-card);
 }
 
 .retro-table {
@@ -1002,7 +1004,7 @@ code, pre, .font-mono {
 }
 
 .retro-table th {
-  background: #f1f5f9;
+  background: #f4ede3;
   border-bottom: 2px solid #202124;
   padding: 0.65rem 0.85rem;
   font-weight: 800;
@@ -1011,16 +1013,66 @@ code, pre, .font-mono {
 
 .retro-table td {
   padding: 0.65rem 0.85rem;
-  border-bottom: 1px solid #e8eaed;
+  border-bottom: 1px solid #eee4d7;
 }
 
 .retro-table tr:hover {
-  background-color: #f8fafd;
+  background-color: #fbf5ec;
+}
+
+/* Dedicated Sensors Fleet Scroller (Limits height & prevents overall webpage stretching) */
+.sensor-table-scroller {
+  max-height: calc(100vh - 290px);
+  min-height: 420px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 2.5px solid #202124;
+  border-radius: 14px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-retro-sm);
+  position: relative;
+}
+
+/* Custom retro scrollbar */
+.sensor-table-scroller::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.sensor-table-scroller::-webkit-scrollbar-track {
+  background: #f3ebe0;
+  border-left: 2px solid #202124;
+  border-radius: 0 12px 12px 0;
+}
+
+.sensor-table-scroller::-webkit-scrollbar-thumb {
+  background: var(--retro-yellow);
+  border: 2px solid #202124;
+  border-radius: 6px;
+}
+
+.sensor-table-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--retro-yellow-hover);
+}
+
+.sensor-table-scroller table.retro-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sensor-table-scroller thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f4ede3;
+  border-bottom: 2.5px solid #202124;
+  box-shadow: 0 2px 0 #202124;
 }
 
 /* Footer */
 .retro-footer {
-  background: #ffffff;
+  background: var(--bg-card);
   border-top: 3px solid #202124;
   padding: 1.25rem 1.5rem;
   text-align: center;

@@ -24,23 +24,27 @@ export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
   const [activeSensorId, setActiveSensorId] = useState<string>(sensors[0]?.id || '');
   const [spikeSuccess, setSpikeSuccess] = useState<boolean>(false);
 
-  const buildings = ['All', 'Central Library', 'Technology Tower', 'Silver Jubilee Tower', 'Main Building'];
-  const sensorTypes = ['All', 'temperature', 'co2', 'humidity', 'occupancy', 'noise', 'pm25'];
+  const safeSensors = sensors || [];
+  const dynamicBuildings = Array.from(new Set(safeSensors.map((s) => s.building))).filter(Boolean).sort();
+  const buildings = ['All', ...dynamicBuildings];
 
-  const filteredSensors = (sensors || []).filter((s) => {
+  const dynamicTypes = Array.from(new Set(safeSensors.map((s) => s.sensor_type))).filter(Boolean).sort();
+  const sensorTypes = ['All', ...dynamicTypes];
+
+  const filteredSensors = safeSensors.filter((s) => {
     const matchesBuilding = selectedBuilding === 'All' || s.building.toLowerCase() === selectedBuilding.toLowerCase();
     const matchesType = selectedType === 'All' || s.sensor_type.toLowerCase() === selectedType.toLowerCase();
     const matchesSearch = !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesBuilding && matchesType && matchesSearch;
   });
 
-  const activeSensor = (sensors || []).find((s) => s.id === activeSensorId) || filteredSensors[0] || null;
+  const activeSensor = safeSensors.find((s) => s.id === activeSensorId) || filteredSensors[0] || null;
 
   const handleReset = () => {
     setSelectedBuilding('All');
     setSelectedType('All');
     setSearchQuery('');
-    if (sensors && sensors[0]) setActiveSensorId(sensors[0].id);
+    if (safeSensors.length > 0) setActiveSensorId(safeSensors[0].id);
   };
 
   const handleConfirmSpike = async () => {
@@ -62,30 +66,43 @@ export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
 
   return (
     <div className="retro-big-card">
-      {/* Top Filter Pills Row 1: Buildings (Original Layout) */}
+      {/* Top Filter Pills Row 1: Buildings with Exact Counts Adding Up to Total */}
       <div className="retro-pill-bar" style={{ marginBottom: '0.65rem' }}>
-        {buildings.map((b) => (
-          <button
-            key={b}
-            onClick={() => setSelectedBuilding(b)}
-            className={`filter-pill ${selectedBuilding === b ? 'active' : ''}`}
-          >
-            {b.toUpperCase()}
-          </button>
-        ))}
+        {buildings.map((b) => {
+          const count = b === 'All'
+            ? safeSensors.length
+            : safeSensors.filter((s) => s.building.toLowerCase() === b.toLowerCase()).length;
+          return (
+            <button
+              key={b}
+              onClick={() => setSelectedBuilding(b)}
+              className={`filter-pill ${selectedBuilding.toLowerCase() === b.toLowerCase() ? 'active' : ''}`}
+            >
+              {b === 'All' ? `ALL BUILDINGS (${count})` : `${b.toUpperCase()} (${count})`}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Top Filter Pills Row 2: Sensor Types (Original Layout) */}
+      {/* Top Filter Pills Row 2: Sensor Types with Exact Counts Adding Up to Total */}
       <div className="retro-pill-bar" style={{ marginBottom: '1.25rem' }}>
-        {sensorTypes.map((t) => (
-          <button
-            key={t}
-            onClick={() => setSelectedType(t)}
-            className={`filter-pill ${selectedType === t ? 'active' : ''}`}
-          >
-            {t === 'All' ? 'ALL METRICS' : `${t.toUpperCase()} ('26 BATCH)`}
-          </button>
-        ))}
+        {sensorTypes.map((t) => {
+          const count = t === 'All'
+            ? safeSensors.length
+            : safeSensors.filter((s) => s.sensor_type.toLowerCase() === t.toLowerCase()).length;
+          const displayLabel = t === 'All'
+            ? `ALL METRICS (${count})`
+            : `${t.toUpperCase()} ('26 BATCH) (${count})`;
+          return (
+            <button
+              key={t}
+              onClick={() => setSelectedType(t)}
+              className={`filter-pill ${selectedType.toLowerCase() === t.toLowerCase() ? 'active' : ''}`}
+            >
+              {displayLabel}
+            </button>
+          );
+        })}
       </div>
 
       {/* Middle Search & Inputs Bar */}
@@ -105,13 +122,15 @@ export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
           >
-            <option value="All">All Sensor Metrics</option>
-            <option value="temperature">Temperature (°C)</option>
-            <option value="co2">CO2 Concentration (ppm)</option>
-            <option value="humidity">Relative Humidity (%)</option>
-            <option value="occupancy">Auditorium Occupancy</option>
-            <option value="noise">Acoustic Noise (dB)</option>
-            <option value="pm25">Particulate Matter PM2.5</option>
+            <option value="All">All Sensor Metrics ({safeSensors.length})</option>
+            {dynamicTypes.map((t) => {
+              const count = safeSensors.filter((s) => s.sensor_type.toLowerCase() === t.toLowerCase()).length;
+              return (
+                <option key={t} value={t}>
+                  {t.toUpperCase()} ({count})
+                </option>
+              );
+            })}
           </select>
         </div>
         <div>
@@ -120,19 +139,25 @@ export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
             value={selectedBuilding}
             onChange={(e) => setSelectedBuilding(e.target.value)}
           >
-            {buildings.map((b) => (
-              <option key={b} value={b}>{b === 'All' ? 'All Campus Slots / Zones' : b}</option>
-            ))}
+            <option value="All">All Campus Slots / Zones ({safeSensors.length})</option>
+            {dynamicBuildings.map((b) => {
+              const count = safeSensors.filter((s) => s.building.toLowerCase() === b.toLowerCase()).length;
+              return (
+                <option key={b} value={b}>
+                  {b} ({count})
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
 
-      {/* Split Columns Grid (Original Layout) */}
+      {/* Split Columns Grid */}
       <div className="retro-split-grid">
         {/* Left Column: Select Sensors */}
         <div className="retro-column-box">
           <div className="retro-column-title">
-            Select Sensors ({filteredSensors.length} Available)
+            Select Sensors ({filteredSensors.length} of {safeSensors.length} Available)
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>

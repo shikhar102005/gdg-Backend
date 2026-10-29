@@ -20,8 +20,8 @@ export const SensorsPage: React.FC<SensorsPageProps> = ({ sensors, onRefresh }) 
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   const safeSensors = sensors || [];
-  const buildings = Array.from(new Set(safeSensors.map((s) => s.building))).filter(Boolean);
-  const types = Array.from(new Set(safeSensors.map((s) => s.sensor_type))).filter(Boolean);
+  const buildings = Array.from(new Set(safeSensors.map((s) => s.building))).filter(Boolean).sort();
+  const types = Array.from(new Set(safeSensors.map((s) => s.sensor_type))).filter(Boolean).sort();
 
   const filteredSensors = safeSensors.filter((s) => {
     if (selectedBuilding && s.building !== selectedBuilding) return false;
@@ -50,43 +50,94 @@ export const SensorsPage: React.FC<SensorsPageProps> = ({ sensors, onRefresh }) 
     }
   };
 
+  const hasActiveFilters = Boolean(selectedBuilding || selectedType || selectedStatus || searchQuery);
+
+  const handleResetFilters = () => {
+    setSelectedBuilding('');
+    setSelectedType('');
+    setSelectedStatus('');
+    setSearchQuery('');
+  };
+
   return (
     <div>
-      <div className="retro-big-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <h2 style={{ fontWeight: 800, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#202124' }}>
-            <Cpu size={22} color="#1a73e8" />
-            Campus Sensor Fleet Directory ({filteredSensors.length} sensors)
-          </h2>
-          <button
-            onClick={onRefresh}
-            className="retro-pill-btn yellow"
-            style={{ fontSize: '0.82rem', padding: '0.35rem 1rem' }}
-          >
-            <RefreshCw size={13} /> Refresh Fleet
-          </button>
+      <div className="retro-big-card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h2 style={{ fontWeight: 800, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#202124' }}>
+              <Cpu size={22} color="#1a73e8" />
+              Campus Sensor Fleet Directory
+            </h2>
+            <div style={{ fontSize: '0.8rem', color: '#5f6368', fontWeight: 600, marginTop: '2px' }}>
+              {safeSensors.length} Total Monitored Hardware Nodes &bull; Showing {filteredSensors.length} Matching
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="retro-pill-btn coral"
+                style={{ fontSize: '0.78rem', padding: '0.35rem 0.85rem' }}
+              >
+                <X size={12} /> Reset Filters
+              </button>
+            )}
+            <button
+              onClick={onRefresh}
+              className="retro-pill-btn yellow"
+              style={{ fontSize: '0.82rem', padding: '0.35rem 1rem' }}
+            >
+              <RefreshCw size={13} /> Refresh Fleet
+            </button>
+          </div>
         </div>
 
-        {/* Filter Toolbar with Pills */}
-        <div className="retro-pill-bar" style={{ marginBottom: '1rem' }}>
+        {/* Filter Toolbar Row 1: Buildings with Exact Counts adding up to Total */}
+        <div className="retro-pill-bar" style={{ marginBottom: '0.5rem' }}>
           <button
             onClick={() => setSelectedBuilding('')}
             className={`filter-pill ${selectedBuilding === '' ? 'active' : ''}`}
           >
-            ALL BUILDINGS
+            ALL BUILDINGS ({safeSensors.length})
           </button>
-          {buildings.map((b) => (
-            <button
-              key={b}
-              onClick={() => setSelectedBuilding(b)}
-              className={`filter-pill ${selectedBuilding === b ? 'active' : ''}`}
-            >
-              {b.toUpperCase()}
-            </button>
-          ))}
+          {buildings.map((b) => {
+            const count = safeSensors.filter((s) => s.building === b).length;
+            return (
+              <button
+                key={b}
+                onClick={() => setSelectedBuilding(b)}
+                className={`filter-pill ${selectedBuilding === b ? 'active' : ''}`}
+              >
+                {b.toUpperCase()} ({count})
+              </button>
+            );
+          })}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
+        {/* Filter Toolbar Row 2: Metric Types with Exact Counts adding up to Total */}
+        <div className="retro-pill-bar" style={{ marginBottom: '1rem' }}>
+          <button
+            onClick={() => setSelectedType('')}
+            className={`filter-pill ${selectedType === '' ? 'active' : ''}`}
+          >
+            ALL METRICS ({safeSensors.length})
+          </button>
+          {types.map((t) => {
+            const count = safeSensors.filter((s) => s.sensor_type === t).length;
+            return (
+              <button
+                key={t}
+                onClick={() => setSelectedType(t)}
+                className={`filter-pill ${selectedType === t ? 'active' : ''}`}
+              >
+                {t.toUpperCase()} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search & Selector Filters Bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
           <div>
             <input
               type="text"
@@ -102,10 +153,15 @@ export const SensorsPage: React.FC<SensorsPageProps> = ({ sensors, onRefresh }) 
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
             >
-              <option value="">All Sensor Types</option>
-              {types.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
+              <option value="">All Sensor Types ({safeSensors.length})</option>
+              {types.map((t) => {
+                const count = safeSensors.filter((s) => s.sensor_type === t).length;
+                return (
+                  <option key={t} value={t}>
+                    {t.toUpperCase()} ({count})
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div>
@@ -114,17 +170,16 @@ export const SensorsPage: React.FC<SensorsPageProps> = ({ sensors, onRefresh }) 
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
             >
-              <option value="">All Operational Statuses</option>
-              <option value="active">Active & Online</option>
-              <option value="offline">Offline / Standby</option>
+              <option value="">All Operational Statuses ({safeSensors.length})</option>
+              <option value="active">Active & Online ({safeSensors.filter((s) => s.status === 'active').length})</option>
+              <option value="offline">Offline / Standby ({safeSensors.filter((s) => s.status === 'offline').length})</option>
             </select>
           </div>
         </div>
 
-        {/* Sensors Table */}
-        <div className="retro-inner-panel">
-          <div className="retro-table-container">
-            <table className="retro-table">
+        {/* Dedicated Sensors Scroller (Prevents webpage vertical expansion) */}
+        <div className="sensor-table-scroller">
+          <table className="retro-table">
               <thead>
                 <tr>
                   <th>Sensor ID</th>
@@ -182,7 +237,6 @@ export const SensorsPage: React.FC<SensorsPageProps> = ({ sensors, onRefresh }) 
             </table>
           </div>
         </div>
-      </div>
 
       {/* History Inspection Modal */}
       {inspectSensor && (
