@@ -1,0 +1,33 @@
+meta {
+  name: Create or Update Sensor
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/sensors
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "id": "new-outdoor-temp",
+    "name": "North Gate Weather Station Temp",
+    "campus": "Vellore Campus",
+    "building": "North Gate",
+    "location": "Weather Post 1",
+    "sensor_type": "temperature",
+    "unit": "celsius",
+    "status": "active"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq "new-outdoor-temp"
+}

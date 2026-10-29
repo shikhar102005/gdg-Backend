@@ -1,0 +1,26 @@
+meta {
+  name: Toggle Rule State
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/rules/{{ruleId}}/toggle
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "enabled": false
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.enabled: eq false
+}

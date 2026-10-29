@@ -1,0 +1,45 @@
+meta {
+  name: Ingest Batch Readings (Burst Path)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/readings/batch
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "readings": [
+      {
+        "sensorId": "lib-fl2-temp",
+        "type": "temperature",
+        "value": 24.5,
+        "timestamp": "2026-10-26T04:30:05Z",
+        "quality": "good"
+      },
+      {
+        "sensorId": "lib-fl1-co2",
+        "type": "co2",
+        "value": 520.0,
+        "timestamp": "2026-10-26T04:30:05Z",
+        "quality": "good"
+      },
+      {
+        "sensorId": "tt-lab3-hum",
+        "type": "humidity",
+        "value": 46.2,
+        "timestamp": "2026-10-26T04:30:05Z",
+        "quality": "good"
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accepted_count: eq 3
+  res.body.failed_count: eq 0
+}

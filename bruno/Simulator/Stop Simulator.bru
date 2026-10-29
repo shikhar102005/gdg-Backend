@@ -1,0 +1,20 @@
+meta {
+  name: Stop Simulator
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/simulator/stop
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq "stopped"
+}

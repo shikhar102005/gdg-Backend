@@ -1,0 +1,17 @@
+meta {
+  name: Get Metric Trends
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/readings/trends?metric=temperature&duration=1h&bucket=1m
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.points: isDefined
+  res.body.metric: eq "temperature"
+}

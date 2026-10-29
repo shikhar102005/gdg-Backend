@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Campus Sensor Monitoring & Alerts Engine API
+  description: High-throughput environmental sensor ingestion, incident management, and real-time rule evaluation system.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      description: Returns process health status.
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              example:
+                status: healthy
+                service: campus-sensor-backend
+                timestamp: "2026-10-26T04:00:00Z"
+
+  /readyz:
+    get:
+      summary: Readiness probe
+      description: Returns database connection status and operational readiness.
+      responses:
+        '200':
+          description: Service and database are ready
+        '503':
+          description: Database unready or unreachable
+
+  /api/v1/auth/login:
+    post:
+      summary: Organizer authentication
+      description: Validates organizer credentials and returns a signed session JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: organizer@campus.edu
+                password:
+                  type: string
+                  example: CampusOrganizerSecure2026!
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  role:
+                    type: string
+                    example: admin
+        '401':
+          description: Invalid credentials
+
+  /api/v1/auth/me:
+    get:
+      summary: Current user claims
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user identity and role
+
+  /api/v1/readings:
+    post:
+      summary: Ingest single reading
+      description: Ingests one sensor observation with validation and asynchronous alert dispatch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sensorId, type, value]
+              properties:
+                sensorId:
+                  type: string
+                  example: lib-fl2-temp
+                type:
+                  type: string
+                  example: temperature
+                value:
+                  type: number
+                  example: 24.5
+                timestamp:
+                  type: string
+                  format: date-time
+                idempotencyKey:
+                  type: string
+      responses:
+        '202':
+          description: Reading accepted and durably persisted
+
+  /api/v1/readings/batch:
+    post:
+      summary: Ingest batch readings
+      description: High-throughput burst ingestion endpoint capable of streaming batches up to 5,000 readings per request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [readings]
+              properties:
+                readings:
+                  type: array
+                  items:
+                    type: object
+                    required: [sensorId, type, value]
+                    properties:
+                      sensorId: { type: string }
+                      type: { type: string }
+                      value: { type: number }
+                      timestamp: { type: string }
+      responses:
+        '200':
+          description: All readings in batch accepted
+        '207':
+          description: Multi-status with partial validation errors
+        '400':
+          description: All items failed or batch exceeded size limit
+
+  /api/v1/sensors:
+    get:
+      summary: List sensors
+      parameters:
+        - name: building
+          in: query
+          schema: { type: string }
+        - name: sensor_type
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Filtered sensor fleet array
+
+  /api/v1/readings/trends:
+    get:
+      summary: Aggregate trends
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema: { type: string, default: temperature }
+        - name: duration
+          in: query
+          schema: { type: string, default: 1h }
+        - name: bucket
+          in: query
+          schema: { type: string, default: 1m }
+      responses:
+        '200':
+          description: Time-bucketed average, min, and max data points
+
+  /api/v1/alerts:
+    get:
+      summary: List incidents and alerts
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [OPEN, ACKNOWLEDGED, RESOLVED] }
+        - name: severity
+          in: query
+          schema: { type: string, enum: [info, warning, critical] }
+      responses:
+        '200':
+          description: Incident list with active counts
+
+  /api/v1/alerts/{id}/acknowledge:
+    post:
+      summary: Acknowledge incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Incident marked as ACKNOWLEDGED
+
+  /api/v1/alerts/{id}/resolve:
+    post:
+      summary: Resolve incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes: { type: string }
+      responses:
+        '200':
+          description: Incident marked as RESOLVED and deduplication lock cleared
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

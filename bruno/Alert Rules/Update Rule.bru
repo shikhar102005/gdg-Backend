@@ -1,0 +1,35 @@
+meta {
+  name: Update Rule
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/v1/rules/{{ruleId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "name": "High Noise Level in Library (Calibrated)",
+    "description": "Trigger alert if noise in library exceeds 65dB",
+    "enabled": true,
+    "scope_type": "building",
+    "scope_value": "Central Library",
+    "metric": "noise",
+    "rule_class": "single_reading",
+    "operator": ">",
+    "threshold": 65.0,
+    "severity": "warning"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.threshold: eq 65.0
+}

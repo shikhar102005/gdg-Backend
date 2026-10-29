@@ -1,0 +1,17 @@
+meta {
+  name: Get Dashboard Summary
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/dashboard/summary
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.total_sensors: gte 0
+  res.body.active_alerts_count: gte 0
+}

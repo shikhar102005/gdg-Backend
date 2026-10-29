@@ -1,0 +1,16 @@
+meta {
+  name: Get Sensor by ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/sensors/{{sensorId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq "{{sensorId}}"
+}

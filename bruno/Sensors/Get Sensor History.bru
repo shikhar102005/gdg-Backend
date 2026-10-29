@@ -1,0 +1,16 @@
+meta {
+  name: Get Sensor Reading History
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/sensors/{{sensorId}}/history?limit=50
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.readings: isDefined
+}

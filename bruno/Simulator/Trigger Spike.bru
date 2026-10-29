@@ -1,0 +1,29 @@
+meta {
+  name: Trigger Threshold Spike
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/simulator/trigger-spike
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "metric": "temperature",
+    "sensor_id": "lib-fl2-temp",
+    "value": 39.5
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq "spike_queued"
+  res.body.value: eq 39.5
+}

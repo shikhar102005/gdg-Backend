@@ -1,0 +1,17 @@
+meta {
+  name: List Sensors
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/sensors
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.sensors: isDefined
+  res.body.count: gte 1
+}

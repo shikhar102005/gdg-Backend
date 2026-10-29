@@ -1,0 +1,26 @@
+meta {
+  name: Start Simulator
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/simulator/start
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "rate_per_second": 15
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq "started"
+}

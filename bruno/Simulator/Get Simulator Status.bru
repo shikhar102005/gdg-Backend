@@ -1,0 +1,16 @@
+meta {
+  name: Get Simulator Status
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/simulator/status
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.rate_per_second: isDefined
+}

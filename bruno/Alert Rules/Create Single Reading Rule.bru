@@ -1,0 +1,42 @@
+meta {
+  name: Create Single Reading Rule
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/rules
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "name": "High Noise Level in Library",
+    "description": "Trigger alert if noise in library exceeds 60dB",
+    "enabled": true,
+    "scope_type": "building",
+    "scope_value": "Central Library",
+    "metric": "noise",
+    "rule_class": "single_reading",
+    "operator": ">",
+    "threshold": 60.0,
+    "severity": "warning"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isDefined
+  res.body.name: eq "High Noise Level in Library"
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.id) {
+    bru.setEnvVar("ruleId", res.body.id);
+  }
+}

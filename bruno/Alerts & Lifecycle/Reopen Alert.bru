@@ -1,0 +1,20 @@
+meta {
+  name: Reopen Alert
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/alerts/{{alertId}}/reopen
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq "OPEN"
+}

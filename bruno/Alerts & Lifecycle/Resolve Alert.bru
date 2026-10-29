@@ -1,0 +1,27 @@
+meta {
+  name: Resolve Alert
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/alerts/{{alertId}}/resolve
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "notes": "HVAC filter serviced and airflow restored."
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq "RESOLVED"
+  res.body.resolution_notes: isDefined
+}

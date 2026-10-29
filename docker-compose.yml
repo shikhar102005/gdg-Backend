@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: campus-sensors-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: campus_sensors
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d campus_sensors"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: campus-sensors-backend
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SERVER_HOST: 0.0.0.0
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/campus_sensors?sslmode=disable
+      ORGANIZER_JWT_SECRET: campus-monitoring-secure-demo-secret-key-32bytes-min
+      CORS_ALLOWED_ORIGINS: "*"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,650 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root {
+  /* Google Themed Palette applied to the playful layout */
+  --bg-retro: #f8fafd;
+  --bg-retro-panel: #e8f0fe;
+  --bg-card: #ffffff;
+  --bg-card-alt: #f8fafc;
+  --border-black: #202124;
+  
+  /* Google 4-Color Signature Palette */
+  --google-blue: #4285f4;
+  --google-blue-dark: #1a73e8;
+  --google-red: #ea4335;
+  --google-red-dark: #d93025;
+  --google-yellow: #fbbc04;
+  --google-yellow-dark: #f29900;
+  --google-green: #34a853;
+  --google-green-dark: #1e8e3e;
+
+  /* Pill & Button Google Colors */
+  --retro-yellow: #fde293;
+  --retro-yellow-hover: #fbbc04;
+  --retro-green: #ceead6;
+  --retro-green-hover: #34a853;
+  --retro-blue: #d2e3fc;
+  --retro-blue-hover: #4285f4;
+  --retro-coral: #fad2cf;
+  --retro-coral-hover: #ea4335;
+  --retro-purple: #e8eaed;
+  --retro-purple-hover: #dadce0;
+  --retro-cream: #ffffff;
+
+  --text-main: #202124;
+  --text-muted: #3c4043;
+  --text-light: #5f6368;
+
+  --shadow-retro-sm: 2px 2px 0px #202124;
+  --shadow-retro: 3px 3px 0px #202124;
+  --shadow-retro-md: 4px 4px 0px #202124;
+  --shadow-retro-lg: 6px 6px 0px #202124;
+  --shadow-retro-hover: 5px 5px 0px #202124;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Space Grotesk', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-retro);
+  background-image: radial-gradient(rgba(66, 133, 244, 0.16) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* =====================================================================
+   HEADER & NAVBAR (Restoring Original Layout with Google Color Scheme)
+   ===================================================================== */
+.retro-header {
+  padding: 1rem 1.5rem 0.5rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.retro-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.retro-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.retro-hex-logo {
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border: 2px solid #202124;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-retro-sm);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--google-blue-dark);
+}
+
+.retro-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid #202124;
+  border-radius: 9999px;
+  padding: 0.45rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  background: #ffffff;
+  color: #202124;
+  box-shadow: var(--shadow-retro-sm);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.retro-pill-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-retro);
+}
+
+.retro-pill-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #202124;
+}
+
+.retro-pill-btn.yellow {
+  background: var(--retro-yellow);
+}
+.retro-pill-btn.yellow:hover {
+  background: var(--retro-yellow-hover);
+}
+
+.retro-pill-btn.green {
+  background: var(--retro-green);
+}
+.retro-pill-btn.green:hover {
+  background: var(--retro-green-hover);
+  color: #ffffff;
+}
+
+.retro-pill-btn.blue {
+  background: var(--retro-blue);
+}
+.retro-pill-btn.blue:hover {
+  background: var(--retro-blue-hover);
+  color: #ffffff;
+}
+
+.retro-pill-btn.coral {
+  background: var(--retro-coral);
+}
+.retro-pill-btn.coral:hover {
+  background: var(--retro-coral-hover);
+  color: #ffffff;
+}
+
+.retro-banner-pill {
+  background: var(--retro-yellow);
+  border: 2px solid #202124;
+  border-radius: 9999px;
+  padding: 0.45rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-retro-sm);
+  color: #202124;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Secondary Navigation Tabs */
+.retro-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.retro-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1.1rem;
+  border: 2px solid #202124;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #202124;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-retro-sm);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.retro-nav-tab:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-retro);
+  background: #f8fafd;
+}
+
+.retro-nav-tab.active {
+  background: var(--google-blue);
+  color: #ffffff;
+  box-shadow: var(--shadow-retro);
+}
+
+/* =====================================================================
+   HERO BANNER (Original Layout with Google Color Accents)
+   ===================================================================== */
+.retro-hero {
+  position: relative;
+  max-width: 1400px;
+  margin: 1.5rem auto 2rem auto;
+  text-align: center;
+  padding: 1.5rem 1rem;
+}
+
+.retro-hero-inner {
+  position: relative;
+  display: inline-block;
+  max-width: 650px;
+}
+
+.retro-hero-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #202124;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.retro-hero-subtitle {
+  font-size: 1.1rem;
+  color: #3c4043;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+/* Isometric 3D box cube icon */
+.isometric-cube {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  filter: drop-shadow(3px 3px 0px #202124);
+}
+
+/* Floating alphabet letter tiles with Google colors */
+.floating-tile {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  background: #ffffff;
+  border: 2.5px solid #202124;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #202124;
+  box-shadow: 2.5px 2.5px 0px #202124;
+  user-select: none;
+  pointer-events: none;
+}
+
+.floating-tile.tile-blue {
+  background: #e8f0fe;
+  color: var(--google-blue-dark);
+}
+
+.floating-tile.tile-red {
+  background: #fce8e6;
+  color: var(--google-red);
+}
+
+.floating-tile.tile-yellow {
+  background: #fef7e0;
+  color: var(--google-yellow-dark);
+}
+
+.floating-tile.tile-green {
+  background: #e6f4ea;
+  color: var(--google-green);
+}
+
+/* =====================================================================
+   MAIN RETRO PANELS & CARDS (Restoring Original Layout)
+   ===================================================================== */
+.main-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem 1.5rem;
+}
+
+/* Big container card with thick border */
+.retro-big-card {
+  background: var(--bg-retro-panel);
+  border: 3px solid #202124;
+  border-radius: 24px;
+  box-shadow: var(--shadow-retro-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Inner white rounded panel */
+.retro-inner-panel {
+  background: #ffffff;
+  border: 2px solid #202124;
+  border-radius: 16px;
+  box-shadow: var(--shadow-retro);
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+/* Filter pills bar */
+.retro-pill-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-pill {
+  border: 2px solid #202124;
+  border-radius: 9999px;
+  padding: 0.3rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #ffffff;
+  color: #202124;
+  cursor: pointer;
+  box-shadow: var(--shadow-retro-sm);
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.filter-pill:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-retro);
+}
+
+.filter-pill.active {
+  background: var(--retro-yellow);
+  color: #202124;
+}
+
+/* Retro input field with pill shape */
+.retro-pill-input {
+  border: 2px solid #202124;
+  border-radius: 9999px;
+  background: #ffffff;
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-retro-sm);
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  color: #202124;
+}
+
+.retro-pill-input:focus {
+  box-shadow: var(--shadow-retro);
+  background: #ffffff;
+  border-color: var(--google-blue);
+}
+
+/* Split Columns Grid */
+.retro-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 850px) {
+  .retro-split-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.retro-column-box {
+  background: #ffffff;
+  border: 2px solid #202124;
+  border-radius: 16px;
+  padding: 1.25rem;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+.retro-column-title {
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #202124;
+  margin-bottom: 1rem;
+  color: #202124;
+}
+
+/* Metric Summary Cards Grid */
+.retro-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.retro-metric-card {
+  background: #ffffff;
+  border: 2.5px solid #202124;
+  border-radius: 16px;
+  box-shadow: var(--shadow-retro-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+
+.retro-metric-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-retro-hover);
+}
+
+.retro-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.retro-metric-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.retro-metric-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #202124;
+  line-height: 1.1;
+  margin-bottom: 0.25rem;
+}
+
+.retro-metric-sub {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5f6368;
+}
+
+/* Retro Badges with Google Colors */
+.retro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border: 1.5px solid #202124;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  box-shadow: 1.5px 1.5px 0px #202124;
+}
+
+.retro-badge.active {
+  background: var(--retro-green);
+  color: #0d652d;
+}
+.retro-badge.warning {
+  background: var(--retro-yellow);
+  color: #b06000;
+}
+.retro-badge.critical {
+  background: var(--retro-coral);
+  color: #c5221f;
+}
+.retro-badge.info {
+  background: var(--retro-blue);
+  color: var(--google-blue-dark);
+}
+
+/* =====================================================================
+   RETRO MODAL WINDOW (macOS Header with Google Palette)
+   ===================================================================== */
+.retro-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 33, 36, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.retro-modal-window {
+  background: var(--retro-cream);
+  border: 3px solid #202124;
+  border-radius: 16px;
+  box-shadow: 8px 8px 0px #202124;
+  max-width: 480px;
+  width: 100%;
+  overflow: hidden;
+  animation: retroPopIn 0.15s ease-out;
+}
+
+@keyframes retroPopIn {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.retro-modal-header {
+  background: var(--retro-yellow);
+  border-bottom: 3px solid #202124;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.retro-modal-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.window-dot {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid #202124;
+  border-radius: 50%;
+}
+.window-dot.red { background: var(--google-red); }
+.window-dot.yellow { background: var(--google-yellow); }
+.window-dot.green { background: var(--google-green); }
+
+.retro-modal-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #202124;
+  pointer-events: none;
+}
+
+.retro-modal-body {
+  padding: 1.5rem;
+  font-size: 0.9rem;
+  color: #202124;
+  line-height: 1.6;
+}
+
+.retro-modal-footer {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.retro-modal-ok-btn {
+  background: var(--retro-yellow);
+  border: 2.5px solid #202124;
+  border-radius: 10px;
+  padding: 0.45rem 2rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #202124;
+  transition: all 0.1s ease;
+  color: #202124;
+}
+
+.retro-modal-ok-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #202124;
+  background: var(--retro-yellow-hover);
+}
+
+.retro-modal-ok-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #202124;
+}
+
+/* =====================================================================
+   RETRO TABLES & LISTS
+   ===================================================================== */
+.retro-table-container {
+  border: 2px solid #202124;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-retro-sm);
+  background: #ffffff;
+}
+
+.retro-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.retro-table th {
+  background: #f1f5f9;
+  border-bottom: 2px solid #202124;
+  padding: 0.65rem 0.85rem;
+  font-weight: 800;
+  color: #202124;
+}
+
+.retro-table td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.retro-table tr:hover {
+  background-color: #f8fafd;
+}
+
+/* Footer */
+.retro-footer {
+  background: #ffffff;
+  border-top: 3px solid #202124;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 -3px 0px rgba(0,0,0,0.06);
+  color: #3c4043;
+}

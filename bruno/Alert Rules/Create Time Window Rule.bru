@@ -1,0 +1,37 @@
+meta {
+  name: Create Time Window Rule
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/rules
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "name": "High PM2.5 Sustained Average (15m)",
+    "description": "Trigger when 15-minute average PM2.5 exceeds 35 ug/m3",
+    "enabled": true,
+    "scope_type": "global",
+    "metric": "pm25",
+    "rule_class": "time_window",
+    "operator": ">",
+    "threshold": 35.0,
+    "window_duration_seconds": 900,
+    "window_aggregation": "avg",
+    "severity": "critical"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isDefined
+  res.body.rule_class: eq "time_window"
+}

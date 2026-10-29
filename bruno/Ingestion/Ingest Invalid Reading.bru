@@ -1,0 +1,25 @@
+meta {
+  name: Ingest Invalid Reading (Error Case)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/readings
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sensorId": "",
+    "type": "temperature",
+    "value": 24.5,
+    "timestamp": "not-a-date"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error: isDefined
+}

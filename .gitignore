@@ -1,0 +1,36 @@
+# Go binaries and build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Node and frontend
+node_modules/
+web/node_modules/
+web/dist/
+web/build/
+.npm/
+
+# IDE / System files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Chat session restoration files (ignored by git)
+.session/
+*.session.*
+session_history.*
+
