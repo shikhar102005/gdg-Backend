@@ -61,7 +61,7 @@ func NewRouter(c *ServerComponents) http.Handler {
 		r.Get("/sensors", sensorHandler.List)
 		r.Get("/sensors/{id}", sensorHandler.Get)
 		r.Get("/sensors/{id}/history", sensorHandler.GetHistory)
-		r.Post("/sensors", sensorHandler.CreateOrUpdate)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/sensors", sensorHandler.CreateOrUpdate)
 
 		// Dashboard summary & audit
 		r.Get("/dashboard/summary", dashboardHandler.GetSummary)
@@ -70,22 +70,22 @@ func NewRouter(c *ServerComponents) http.Handler {
 		// Alert rules
 		r.Get("/rules", rulesHandler.List)
 		r.Get("/rules/{id}", rulesHandler.Get)
-		r.Post("/rules", rulesHandler.Create)
-		r.Put("/rules/{id}", rulesHandler.Update)
-		r.Patch("/rules/{id}/toggle", rulesHandler.Toggle)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/rules", rulesHandler.Create)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Put("/rules/{id}", rulesHandler.Update)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Patch("/rules/{id}/toggle", rulesHandler.Toggle)
 
 		// Alerts lifecycle
 		r.Get("/alerts", alertHandler.List)
 		r.Get("/alerts/{id}", alertHandler.Get)
-		r.Post("/alerts/{id}/acknowledge", alertHandler.Acknowledge)
-		r.Post("/alerts/{id}/resolve", alertHandler.Resolve)
-		r.Post("/alerts/{id}/reopen", alertHandler.Reopen)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/alerts/{id}/acknowledge", alertHandler.Acknowledge)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/alerts/{id}/resolve", alertHandler.Resolve)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/alerts/{id}/reopen", alertHandler.Reopen)
 
 		// Simulator controls
 		r.Get("/simulator/status", simHandler.GetStatus)
-		r.Post("/simulator/start", simHandler.Start)
-		r.Post("/simulator/stop", simHandler.Stop)
-		r.Post("/simulator/trigger-spike", simHandler.TriggerSpike)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/simulator/start", simHandler.Start)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/simulator/stop", simHandler.Stop)
+		r.With(RequireAuth(c.AuthSvc), RequireRole(auth.RoleAdmin, auth.RoleOrganizer)).Post("/simulator/trigger-spike", simHandler.TriggerSpike)
 	})
 
 	return r

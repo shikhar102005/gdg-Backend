@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, AlertTriangle, Cpu, Gauge, Layers, RefreshCw, Shield, Sliders, User, X } from 'lucide-react';
+import { Activity, AlertTriangle, Cpu, Gauge, Layers, Lock, RefreshCw, Shield, Sliders, User, X } from 'lucide-react';
 import { UserProfile } from '../types';
 import { api } from '../api/client';
 
@@ -11,6 +11,8 @@ interface NavbarProps {
   onRefresh: () => void;
   user: UserProfile | null;
   setUser: (u: UserProfile | null) => void;
+  showLoginModal?: boolean;
+  setShowLoginModal?: (show: boolean) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,8 +23,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefresh,
   user,
   setUser,
+  showLoginModal,
+  setShowLoginModal,
 }) => {
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [internalShowLogin, setInternalShowLogin] = useState(false);
+  const isLoginModalOpen = showLoginModal !== undefined ? showLoginModal : internalShowLogin;
+  const setLoginModalOpen = setShowLoginModal || setInternalShowLogin;
+
   const [email, setEmail] = useState('organizer@campus.edu');
   const [password, setPassword] = useState('CampusOrganizerSecure2026!');
   const [loginError, setLoginError] = useState('');
@@ -35,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     try {
       const u = await api.login(email, password);
       setUser(u);
-      setShowLoginModal(false);
+      setLoginModalOpen(false);
     } catch (err: any) {
       setLoginError(err.message || 'Login failed');
     } finally {
@@ -58,11 +65,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: Gauge },
-    { id: 'sensors', label: 'Sensors Fleet', icon: Cpu },
-    { id: 'trends', label: 'Trends & Charts', icon: Activity },
-    { id: 'alerts', label: 'Incidents Feed', icon: AlertTriangle, badge: activeAlertsCount },
-    { id: 'rules', label: 'Alert Rules', icon: Sliders },
-    { id: 'simulator', label: 'Simulator Control', icon: Layers },
+    { id: 'sensors', label: 'Sensors', icon: Cpu },
+    { id: 'trends', label: 'Trends', icon: Activity },
+    { id: 'alerts', label: 'Incidents', icon: AlertTriangle, badge: activeAlertsCount },
+    { id: 'rules', label: 'Rules', icon: Sliders },
+    { id: 'simulator', label: 'Simulator', icon: Layers },
   ];
 
   return (
@@ -136,10 +143,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             ) : (
               <button
-                onClick={() => setShowLoginModal(true)}
+                onClick={() => setLoginModalOpen(true)}
                 className="command-login-btn"
+                title="Sign in as Organizer to edit rules, acknowledge incidents, or configure simulator"
               >
-                Organizer Log In
+                <Lock size={13} />
+                <span>Organizer Log In</span>
               </button>
             )}
           </div>
@@ -147,12 +156,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       </header>
 
       {/* Login Modal */}
-      {showLoginModal && (
-        <div className="retro-modal-overlay" onClick={() => setShowLoginModal(false)}>
+      {isLoginModalOpen && (
+        <div className="retro-modal-overlay" onClick={() => setLoginModalOpen(false)}>
           <div className="retro-modal-window" onClick={(e) => e.stopPropagation()}>
             <div className="retro-modal-header">
               <div className="retro-modal-dots">
-                <span className="window-dot red" onClick={() => setShowLoginModal(false)} style={{ cursor: 'pointer' }}></span>
+                <span className="window-dot red" onClick={() => setLoginModalOpen(false)} style={{ cursor: 'pointer' }}></span>
                 <span className="window-dot yellow"></span>
                 <span className="window-dot green"></span>
               </div>
@@ -204,7 +213,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="retro-modal-footer">
                 <button
                   type="button"
-                  onClick={() => setShowLoginModal(false)}
+                  onClick={() => setLoginModalOpen(false)}
                   className="retro-pill-btn"
                 >
                   Cancel

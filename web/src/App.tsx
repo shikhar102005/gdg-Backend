@@ -21,6 +21,9 @@ export const App: React.FC = () => {
   const [simulator, setSimulator] = useState<SimulatorStatus | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const isOrganizer = Boolean(user && (user.role === 'admin' || user.role === 'organizer'));
 
   // Modals state
   const [activeAlert, setActiveAlert] = useState<Alert | null>(null);
@@ -49,6 +52,13 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
+    // If token exists, verify & load active profile
+    if (api.getToken()) {
+      api.getMe()
+        .then((u) => setUser(u))
+        .catch(() => api.setToken(null));
+    }
+
     fetchDashboardData();
     // Poll telemetry data every 4 seconds for a dynamic, live dashboard feel
     const interval = setInterval(fetchDashboardData, 4000);
@@ -57,11 +67,20 @@ export const App: React.FC = () => {
 
   // Alert actions
   const handleOpenAlertAction = (alert: Alert, action: 'acknowledge' | 'resolve' | 'reopen') => {
+    if (!isOrganizer) {
+      setShowLoginModal(true);
+      return;
+    }
     setActiveAlert(alert);
     setAlertAction(action);
   };
 
   const handleAlertActionSubmit = async (alertId: string, action: string, notes?: string) => {
+    if (!isOrganizer) {
+      setShowLoginModal(true);
+      return;
+    }
+
     // 1. Optimistic update in UI
     const targetStatus = action === 'acknowledge' ? 'ACKNOWLEDGED' : action === 'resolve' ? 'RESOLVED' : 'OPEN';
     setAlerts((prev) =>
@@ -96,6 +115,11 @@ export const App: React.FC = () => {
 
   // Rule actions
   const handleToggleRule = async (id: string, enabled: boolean) => {
+    if (!isOrganizer) {
+      setShowLoginModal(true);
+      return;
+    }
+
     // 1. Optimistic toggle in UI
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled } : r)));
 
@@ -112,11 +136,20 @@ export const App: React.FC = () => {
   };
 
   const handleCreateRule = async (rule: Partial<AlertRule>) => {
+    if (!isOrganizer) {
+      setShowLoginModal(true);
+      return;
+    }
     await api.createRule(rule);
     await fetchDashboardData();
   };
 
   const handleTriggerSpike = async (metric?: string, sensorId?: string, value?: number) => {
+    if (!isOrganizer) {
+      setShowLoginModal(true);
+      return;
+    }
+
     const targetMetric = metric || 'temperature';
     const targetSensor = sensorId || 'mb-srv-temp';
     let targetVal = value;
@@ -149,6 +182,8 @@ export const App: React.FC = () => {
           onRefresh={fetchDashboardData}
           user={user}
           setUser={setUser}
+          showLoginModal={showLoginModal}
+          setShowLoginModal={setShowLoginModal}
         />
 
         <main className="main-container" style={{ flex: 1 }}>
@@ -161,6 +196,8 @@ export const App: React.FC = () => {
               onSelectTab={setActiveTab}
               onTriggerSpike={handleTriggerSpike}
               onRefresh={fetchDashboardData}
+              isOrganizer={isOrganizer}
+              onRequireLogin={() => setShowLoginModal(true)}
             />
           )}
 
@@ -183,6 +220,8 @@ export const App: React.FC = () => {
               sensors={sensors}
               onRefresh={fetchDashboardData}
               onOpenAlertAction={handleOpenAlertAction}
+              isOrganizer={isOrganizer}
+              onRequireLogin={() => setShowLoginModal(true)}
             />
           )}
 
@@ -190,8 +229,16 @@ export const App: React.FC = () => {
             <RulesPage
               rules={rules}
               onToggleRule={handleToggleRule}
-              onOpenCreateRule={() => setShowCreateRule(true)}
+              onOpenCreateRule={() => {
+                if (!isOrganizer) {
+                  setShowLoginModal(true);
+                } else {
+                  setShowCreateRule(true);
+                }
+              }}
               onRefresh={fetchDashboardData}
+              isOrganizer={isOrganizer}
+              onRequireLogin={() => setShowLoginModal(true)}
             />
           )}
 
@@ -199,6 +246,8 @@ export const App: React.FC = () => {
             <SimulatorPage
               simulator={simulator}
               onRefresh={fetchDashboardData}
+              isOrganizer={isOrganizer}
+              onRequireLogin={() => setShowLoginModal(true)}
             />
           )}
         </main>

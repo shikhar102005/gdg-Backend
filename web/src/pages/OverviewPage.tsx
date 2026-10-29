@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Activity, AlertTriangle, CheckCircle, Clock, Cpu, Flame, Layers, ShieldAlert, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Clock, Cpu, Flame, Layers, Lock, ShieldAlert, Zap } from 'lucide-react';
 import { Alert, DashboardSummary, Sensor, SimulatorStatus } from '../types';
 import { MetricCard } from '../components/MetricCard';
 import { HeroSection } from '../components/HeroSection';
@@ -13,6 +13,8 @@ interface OverviewPageProps {
   onSelectTab: (tab: string) => void;
   onTriggerSpike: (metric?: string, sensorId?: string, value?: number) => void;
   onRefresh: () => void;
+  isOrganizer?: boolean;
+  onRequireLogin?: () => void;
 }
 
 export const OverviewPage: React.FC<OverviewPageProps> = ({
@@ -23,6 +25,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   onSelectTab,
   onTriggerSpike,
   onRefresh,
+  isOrganizer = false,
+  onRequireLogin,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -65,17 +69,18 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <button
-              onClick={() => onTriggerSpike()}
-              className="retro-pill-btn coral"
-              style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem' }}
-              title="Inject 39.5°C threshold violation spike"
+              onClick={() => isOrganizer ? onTriggerSpike() : onRequireLogin?.()}
+              className={`retro-pill-btn ${isOrganizer ? 'coral' : 'disabled'}`}
+              style={{ padding: '0.4rem 1rem', fontSize: '0.82rem' }}
+              title={isOrganizer ? "Inject 39.5°C threshold violation spike" : "Organizer login required to inject spikes"}
             >
+              {!isOrganizer && <Lock size={13} />}
               <Flame size={14} /> Inject Test Spike
             </button>
             <button
               onClick={() => onSelectTab('simulator')}
               className="retro-pill-btn yellow"
-              style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem' }}
+              style={{ padding: '0.4rem 1rem', fontSize: '0.82rem' }}
             >
               Simulator Settings
             </button>
@@ -130,6 +135,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           sensors={safeSensors}
           onTriggerSpike={onTriggerSpike}
           onRefresh={onRefresh}
+          isOrganizer={isOrganizer}
+          onRequireLogin={onRequireLogin}
         />
       </div>
 
@@ -194,20 +201,22 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
                         {al.status === 'OPEN' && (
                           <button
-                            onClick={() => onOpenAlertAction(al, 'acknowledge')}
-                            className="retro-pill-btn yellow"
+                            onClick={() => isOrganizer ? onOpenAlertAction(al, 'acknowledge') : onRequireLogin?.()}
+                            className={`retro-pill-btn ${isOrganizer ? 'yellow' : 'disabled'}`}
                             style={{ padding: '0.2rem 0.65rem', fontSize: '0.75rem' }}
+                            title={isOrganizer ? "Acknowledge incident" : "Organizer login required"}
                           >
-                            Acknowledge
+                            {!isOrganizer && <Lock size={10} />} Acknowledge
                           </button>
                         )}
                         {(al.status === 'OPEN' || al.status === 'ACKNOWLEDGED') && (
                           <button
-                            onClick={() => onOpenAlertAction(al, 'resolve')}
-                            className="retro-pill-btn green"
+                            onClick={() => isOrganizer ? onOpenAlertAction(al, 'resolve') : onRequireLogin?.()}
+                            className={`retro-pill-btn ${isOrganizer ? 'green' : 'disabled'}`}
                             style={{ padding: '0.2rem 0.65rem', fontSize: '0.75rem' }}
+                            title={isOrganizer ? "Resolve incident" : "Organizer login required"}
                           >
-                            Resolve
+                            {!isOrganizer && <Lock size={10} />} Resolve
                           </button>
                         )}
                       </div>

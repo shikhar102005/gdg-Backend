@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle, Clock, FileText, Filter, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, FileText, Filter, Lock, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react';
 import { Alert, Sensor } from '../types';
 import { IncidentReportModal } from '../components/IncidentReportModal';
 
@@ -8,6 +8,8 @@ interface AlertsPageProps {
   sensors: Sensor[];
   onRefresh: () => void;
   onOpenAlertAction: (alert: Alert, action: 'acknowledge' | 'resolve' | 'reopen') => void;
+  isOrganizer?: boolean;
+  onRequireLogin?: () => void;
 }
 
 export const AlertsPage: React.FC<AlertsPageProps> = ({
@@ -15,6 +17,8 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({
   sensors,
   onRefresh,
   onOpenAlertAction,
+  isOrganizer = false,
+  onRequireLogin,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
@@ -62,6 +66,35 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Read-Only Restriction Banner when unauthenticated */}
+        {!isOrganizer && (
+          <div style={{
+            background: '#e8f0fe',
+            border: '2px solid #202124',
+            borderRadius: '12px',
+            padding: '0.65rem 1rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+            boxShadow: '2px 2px 0px #202124',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', fontWeight: 700, color: '#1a73e8' }}>
+              <Lock size={15} />
+              <span>Read-Only Mode: You are viewing real-time incidents. Organizer login is required to acknowledge, resolve, or reopen incident tickets.</span>
+            </div>
+            <button
+              onClick={onRequireLogin}
+              className="retro-pill-btn green"
+              style={{ padding: '0.25rem 0.85rem', fontSize: '0.75rem' }}
+            >
+              Organizer Log In
+            </button>
+          </div>
+        )}
 
         {/* Status Filter Pills in Google Colors */}
         <div className="retro-pill-bar" style={{ marginBottom: '1rem' }}>
@@ -167,29 +200,32 @@ export const AlertsPage: React.FC<AlertsPageProps> = ({
                         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                           {al.status === 'OPEN' && (
                             <button
-                              onClick={() => onOpenAlertAction(al, 'acknowledge')}
-                              className="retro-pill-btn yellow"
+                              onClick={() => isOrganizer ? onOpenAlertAction(al, 'acknowledge') : onRequireLogin?.()}
+                              className={`retro-pill-btn ${isOrganizer ? 'yellow' : 'disabled'}`}
                               style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem' }}
+                              title={isOrganizer ? "Acknowledge incident" : "Organizer login required"}
                             >
-                              Acknowledge
+                              {!isOrganizer && <Lock size={10} />} Acknowledge
                             </button>
                           )}
                           {(al.status === 'OPEN' || al.status === 'ACKNOWLEDGED') && (
                             <button
-                              onClick={() => onOpenAlertAction(al, 'resolve')}
-                              className="retro-pill-btn green"
+                              onClick={() => isOrganizer ? onOpenAlertAction(al, 'resolve') : onRequireLogin?.()}
+                              className={`retro-pill-btn ${isOrganizer ? 'green' : 'disabled'}`}
                               style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem' }}
+                              title={isOrganizer ? "Resolve incident" : "Organizer login required"}
                             >
-                              Resolve
+                              {!isOrganizer && <Lock size={10} />} Resolve
                             </button>
                           )}
                           {al.status === 'RESOLVED' && (
                             <button
-                              onClick={() => onOpenAlertAction(al, 'reopen')}
-                              className="retro-pill-btn coral"
+                              onClick={() => isOrganizer ? onOpenAlertAction(al, 'reopen') : onRequireLogin?.()}
+                              className={`retro-pill-btn ${isOrganizer ? 'coral' : 'disabled'}`}
                               style={{ padding: '0.25rem 0.65rem', fontSize: '0.72rem' }}
+                              title={isOrganizer ? "Reopen incident" : "Organizer login required"}
                             >
-                              Reopen
+                              {!isOrganizer && <Lock size={10} />} Reopen
                             </button>
                           )}
                         </div>

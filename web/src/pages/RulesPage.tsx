@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Clock, Plus, Power, Sliders, X } from 'lucide-react';
+import { Check, Clock, Lock, Plus, Power, Sliders, X } from 'lucide-react';
 import { AlertRule } from '../types';
 
 interface RulesPageProps {
@@ -7,6 +7,8 @@ interface RulesPageProps {
   onToggleRule: (id: string, enabled: boolean) => Promise<void>;
   onOpenCreateRule: () => void;
   onRefresh: () => void;
+  isOrganizer?: boolean;
+  onRequireLogin?: () => void;
 }
 
 export const RulesPage: React.FC<RulesPageProps> = ({
@@ -14,12 +16,18 @@ export const RulesPage: React.FC<RulesPageProps> = ({
   onToggleRule,
   onOpenCreateRule,
   onRefresh,
+  isOrganizer = false,
+  onRequireLogin,
 }) => {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const safeRules = rules || [];
 
   const handleToggle = async (rule: AlertRule) => {
+    if (!isOrganizer) {
+      onRequireLogin?.();
+      return;
+    }
     setTogglingId(rule.id);
     try {
       await onToggleRule(rule.id, !rule.enabled);
@@ -43,14 +51,44 @@ export const RulesPage: React.FC<RulesPageProps> = ({
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
-              onClick={onOpenCreateRule}
-              className="retro-pill-btn green"
+              onClick={() => isOrganizer ? onOpenCreateRule() : onRequireLogin?.()}
+              className={`retro-pill-btn ${isOrganizer ? 'green' : 'disabled'}`}
               style={{ fontSize: '0.82rem', padding: '0.35rem 1rem' }}
+              title={isOrganizer ? "Create new alert threshold rule" : "Organizer login required"}
             >
-              <Plus size={14} /> Create Rule
+              {!isOrganizer ? <Lock size={13} /> : <Plus size={14} />} Create Rule
             </button>
           </div>
         </div>
+
+        {/* Read-Only Restriction Banner when unauthenticated */}
+        {!isOrganizer && (
+          <div style={{
+            background: '#e8f0fe',
+            border: '2px solid #202124',
+            borderRadius: '12px',
+            padding: '0.65rem 1rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+            boxShadow: '2px 2px 0px #202124',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', fontWeight: 700, color: '#1a73e8' }}>
+              <Lock size={15} />
+              <span>Read-Only Mode: You are viewing active threshold rules. Organizer login is required to create, configure, or toggle rules.</span>
+            </div>
+            <button
+              onClick={onRequireLogin}
+              className="retro-pill-btn green"
+              style={{ padding: '0.25rem 0.85rem', fontSize: '0.75rem' }}
+            >
+              Organizer Log In
+            </button>
+          </div>
+        )}
 
         {/* Rules Table */}
         <div className="retro-inner-panel">
@@ -110,9 +148,11 @@ export const RulesPage: React.FC<RulesPageProps> = ({
                         <button
                           onClick={() => handleToggle(r)}
                           disabled={togglingId === r.id}
-                          className={`retro-pill-btn ${r.enabled ? 'coral' : 'green'}`}
+                          className={`retro-pill-btn ${!isOrganizer ? 'disabled' : r.enabled ? 'coral' : 'green'}`}
                           style={{ padding: '0.2rem 0.65rem', fontSize: '0.72rem' }}
+                          title={!isOrganizer ? "Organizer login required" : r.enabled ? "Disable rule" : "Enable rule"}
                         >
+                          {!isOrganizer && <Lock size={10} />}
                           {r.enabled ? 'Disable' : 'Enable'}
                         </button>
                       </td>

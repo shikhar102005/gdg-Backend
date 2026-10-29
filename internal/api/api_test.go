@@ -131,9 +131,13 @@ func TestIngestBatchEndpoint(t *testing.T) {
 }
 
 func TestAlertRulesAndLifecycle(t *testing.T) {
-	router, _, _ := setupTestServer()
+	router, authSvc, _ := setupTestServer()
+	token, _, err := authSvc.GenerateOrganizerToken("test-admin", "organizer@campus.edu", auth.RoleAdmin)
+	if err != nil {
+		t.Fatalf("failed generating test organizer token: %v", err)
+	}
 
-	// Create rule
+	// 1. Unauthenticated request to mutative endpoint must be rejected with 401
 	rule := models.AlertRule{
 		Name:      "Server Room Overheat",
 		Metric:    "temperature",
@@ -144,7 +148,16 @@ func TestAlertRulesAndLifecycle(t *testing.T) {
 		Enabled:   true,
 	}
 	body, _ := json.Marshal(rule)
+	unauthReq, _ := http.NewRequest(http.MethodPost, "/api/v1/rules", bytes.NewBuffer(body))
+	unauthRR := httptest.NewRecorder()
+	router.ServeHTTP(unauthRR, unauthReq)
+	if unauthRR.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 Unauthorized for unauthenticated rule creation, got %d", unauthRR.Code)
+	}
+
+	// 2. Authorized create rule
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/rules", bytes.NewBuffer(body))
+	req.Header.Set("Authorization", "Bearer "+token)
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
@@ -174,7 +187,7 @@ func TestAlertRulesAndLifecycle(t *testing.T) {
 	// Give alert worker a few milliseconds to process
 	time.Sleep(50 * time.Millisecond)
 
-	// List alerts
+	// List alerts (Read-only, public/viewer accessible)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/alerts", nil)
 	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
@@ -191,24 +204,26 @@ func TestAlertRulesAndLifecycle(t *testing.T) {
 
 	alertID := alertListResp.Alerts[0].ID.String()
 
-	// Acknowledge alert
+	// Acknowledge alert with organizer token
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/alerts/"+alertID+"/acknowledge", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("failed acknowledging alert: %d", rr.Code)
 	}
 
-	// Resolve alert
+	// Resolve alert with organizer token
 	resolveBody, _ := json.Marshal(map[string]string{"notes": "Server HVAC restarted"})
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/alerts/"+alertID+"/resolve", bytes.NewBuffer(resolveBody))
+	req.Header.Set("Authorization", "Bearer "+token)
 	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("failed resolving alert: %d", rr.Code)
 	}
 
-	// Check dashboard summary
+	// Check dashboard summary (Read-only, public/viewer accessible)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/dashboard/summary", nil)
 	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)

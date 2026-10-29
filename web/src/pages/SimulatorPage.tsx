@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
-import { Activity, Flame, Layers, Play, RefreshCw, Square, Wind, Zap } from 'lucide-react';
+import { Activity, Flame, Layers, Lock, Play, RefreshCw, Square, Wind, Zap } from 'lucide-react';
 import { SimulatorStatus } from '../types';
 import { api } from '../api/client';
 
 interface SimulatorPageProps {
   simulator: SimulatorStatus | null;
   onRefresh: () => void;
+  isOrganizer?: boolean;
+  onRequireLogin?: () => void;
 }
 
-export const SimulatorPage: React.FC<SimulatorPageProps> = ({ simulator, onRefresh }) => {
+export const SimulatorPage: React.FC<SimulatorPageProps> = ({
+  simulator,
+  onRefresh,
+  isOrganizer = false,
+  onRequireLogin,
+}) => {
   const [rateInput, setRateInput] = useState(simulator?.rate_per_second || 10);
   const [actionLoading, setActionLoading] = useState(false);
   const [spikeMessage, setSpikeMessage] = useState('');
 
   const handleStart = async () => {
+    if (!isOrganizer) {
+      onRequireLogin?.();
+      return;
+    }
     setActionLoading(true);
     try {
       await api.startSimulator(rateInput);
@@ -24,6 +35,10 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({ simulator, onRefre
   };
 
   const handleStop = async () => {
+    if (!isOrganizer) {
+      onRequireLogin?.();
+      return;
+    }
     setActionLoading(true);
     try {
       await api.stopSimulator();
@@ -34,6 +49,10 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({ simulator, onRefre
   };
 
   const handleTriggerSpike = async (metric: string, sensorId: string, val: number, desc: string) => {
+    if (!isOrganizer) {
+      onRequireLogin?.();
+      return;
+    }
     setActionLoading(true);
     try {
       await api.triggerSpike(metric, sensorId, val);
@@ -66,6 +85,35 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({ simulator, onRefre
             <RefreshCw size={13} /> Refresh Status
           </button>
         </div>
+
+        {/* Read-Only Restriction Banner when unauthenticated */}
+        {!isOrganizer && (
+          <div style={{
+            background: '#e8f0fe',
+            border: '2px solid #202124',
+            borderRadius: '12px',
+            padding: '0.65rem 1rem',
+            marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+            boxShadow: '2px 2px 0px #202124',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', fontWeight: 700, color: '#1a73e8' }}>
+              <Lock size={15} />
+              <span>Read-Only Mode: You can view simulator metrics. Organizer login is required to start/stop the simulator or trigger spikes.</span>
+            </div>
+            <button
+              onClick={onRequireLogin}
+              className="retro-pill-btn green"
+              style={{ padding: '0.25rem 0.85rem', fontSize: '0.75rem' }}
+            >
+              Organizer Log In
+            </button>
+          </div>
+        )}
 
         {spikeMessage && (
           <div style={{
@@ -105,23 +153,26 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({ simulator, onRefre
                 className="retro-pill-input"
                 style={{ width: '120px' }}
                 value={rateInput}
+                disabled={!isOrganizer}
                 onChange={(e) => setRateInput(parseInt(e.target.value) || 5)}
               />
               {simulator?.running ? (
                 <button
                   onClick={handleStop}
                   disabled={actionLoading}
-                  className="retro-pill-btn coral"
+                  className={`retro-pill-btn ${isOrganizer ? 'coral' : 'disabled'}`}
+                  title={isOrganizer ? "Stop telemetry stream" : "Organizer login required"}
                 >
-                  <Square size={14} /> Stop
+                  {!isOrganizer ? <Lock size={13} /> : <Square size={14} />} Stop
                 </button>
               ) : (
                 <button
                   onClick={handleStart}
                   disabled={actionLoading}
-                  className="retro-pill-btn green"
+                  className={`retro-pill-btn ${isOrganizer ? 'green' : 'disabled'}`}
+                  title={isOrganizer ? "Start continuous simulation" : "Organizer login required"}
                 >
-                  <Play size={14} /> Start
+                  {!isOrganizer ? <Lock size={13} /> : <Play size={14} />} Start
                 </button>
               )}
             </div>
@@ -148,24 +199,27 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({ simulator, onRefre
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
             <button
               onClick={() => handleTriggerSpike('temperature', 'mb-srv-temp', 39.5, 'Server Room Thermal Overheat (39.5°C)')}
-              className="retro-pill-btn coral"
+              className={`retro-pill-btn ${isOrganizer ? 'coral' : 'disabled'}`}
               style={{ justifyContent: 'flex-start', padding: '0.65rem 1rem' }}
+              title={isOrganizer ? "Inject 39.5°C spike" : "Organizer login required"}
             >
-              <Flame size={16} /> Server Room Thermal Overheat (39.5°C)
+              {!isOrganizer ? <Lock size={15} /> : <Flame size={16} />} Server Room Thermal Overheat (39.5°C)
             </button>
             <button
               onClick={() => handleTriggerSpike('co2', 'lib-fl1-co2', 1250, 'Library High CO2 Spike (1250 ppm)')}
-              className="retro-pill-btn yellow"
+              className={`retro-pill-btn ${isOrganizer ? 'yellow' : 'disabled'}`}
               style={{ justifyContent: 'flex-start', padding: '0.65rem 1rem' }}
+              title={isOrganizer ? "Inject 1250 ppm CO2 spike" : "Organizer login required"}
             >
-              <Wind size={16} /> Library Poor Ventilation Spike (1250 ppm)
+              {!isOrganizer ? <Lock size={15} /> : <Wind size={16} />} Library Poor Ventilation Spike (1250 ppm)
             </button>
             <button
               onClick={() => handleTriggerSpike('occupancy', 'sjt-aud-occ', 550, 'Auditorium Overcrowding (550 People)')}
-              className="retro-pill-btn blue"
+              className={`retro-pill-btn ${isOrganizer ? 'blue' : 'disabled'}`}
               style={{ justifyContent: 'flex-start', padding: '0.65rem 1rem' }}
+              title={isOrganizer ? "Inject 550 occupancy spike" : "Organizer login required"}
             >
-              <Activity size={16} /> Auditorium Max Capacity (550 People)
+              {!isOrganizer ? <Lock size={15} /> : <Activity size={16} />} Auditorium Max Capacity (550 People)
             </button>
           </div>
         </div>

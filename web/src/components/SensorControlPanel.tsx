@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, AlertTriangle, Check, CheckCircle2, Cpu, Flame, Layers, RotateCcw, Search, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, Check, CheckCircle2, Cpu, Flame, Layers, Lock, RotateCcw, Search, Zap } from 'lucide-react';
 import { Sensor, TrendPoint } from '../types';
 import { TrendsChart } from './TrendsChart';
 
@@ -7,12 +7,16 @@ interface SensorControlPanelProps {
   sensors: Sensor[];
   onTriggerSpike: (metric?: string, sensorId?: string, value?: number) => void;
   onRefresh: () => void;
+  isOrganizer?: boolean;
+  onRequireLogin?: () => void;
 }
 
 export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
   sensors,
   onTriggerSpike,
   onRefresh,
+  isOrganizer = false,
+  onRequireLogin,
 }) => {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('All');
   const [selectedType, setSelectedType] = useState<string>('All');
@@ -245,14 +249,16 @@ export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
               {/* Note matching red asterisk footnote */}
               <div style={{
                 textAlign: 'center',
-                color: '#d93025',
+                color: isOrganizer ? '#d93025' : '#1a73e8',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 marginTop: '1rem',
                 paddingTop: '0.5rem',
                 borderTop: '1px dashed #dadce0',
               }}>
-                *Click any sensor to monitor telemetry or inject a threshold spike test.
+                {isOrganizer
+                  ? '*Click any sensor to monitor telemetry or inject a threshold spike test.'
+                  : '*Viewing in read-only mode. Organizer log in required to inject test spikes.'}
               </div>
             </div>
           ) : (
@@ -273,11 +279,12 @@ export const SensorControlPanel: React.FC<SensorControlPanelProps> = ({
           Reset <RotateCcw size={14} />
         </button>
         <button
-          onClick={handleConfirmSpike}
-          className="retro-pill-btn green"
+          onClick={() => isOrganizer ? handleConfirmSpike() : onRequireLogin?.()}
+          className={`retro-pill-btn ${isOrganizer ? 'green' : 'disabled'}`}
           style={{ padding: '0.55rem 1.75rem', fontSize: '0.9rem' }}
+          title={isOrganizer ? "Inject test threshold spike" : "Organizer login required"}
         >
-          Confirm / Test Spike <Check size={16} />
+          {!isOrganizer && <Lock size={14} />} Confirm / Test Spike <Check size={16} />
         </button>
       </div>
     </div>

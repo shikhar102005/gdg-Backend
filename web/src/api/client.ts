@@ -58,6 +58,15 @@ class ApiClient {
     return data;
   }
 
+  async getMe(): Promise<UserProfile> {
+    const data = await this.request<{ user_id: string; email: string; role: 'admin' | 'organizer' | 'viewer' }>('/auth/me');
+    return {
+      email: data.email,
+      role: data.role,
+      token: this.token || '',
+    };
+  }
+
   // Dashboard
   async getDashboardSummary(): Promise<DashboardSummary> {
     const data = await this.request<DashboardSummary>('/dashboard/summary');
