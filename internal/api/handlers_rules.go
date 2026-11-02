@@ -81,6 +81,11 @@ func (h *RulesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if errMsg := validateRuleFields(&rule); errMsg != "" {
+		writeError(w, http.StatusBadRequest, errMsg)
+		return
+	}
+
 	if err := h.store.CreateAlertRule(r.Context(), &rule); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -124,6 +129,28 @@ func (h *RulesHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rule.ID = id
+	if rule.Operator == "" {
+		rule.Operator = ">"
+	}
+	if rule.Severity == "" {
+		rule.Severity = models.SeverityWarning
+	}
+	if rule.RuleClass == "" {
+		rule.RuleClass = models.RuleClassSingleReading
+	}
+	if rule.RuleClass == models.RuleClassTimeWindow {
+		if rule.WindowDurationSeconds <= 0 {
+			rule.WindowDurationSeconds = 600
+		}
+		if rule.WindowAggregation == "" {
+			rule.WindowAggregation = models.AggAvg
+		}
+	}
+
+	if errMsg := validateRuleFields(&rule); errMsg != "" {
+		writeError(w, http.StatusBadRequest, errMsg)
+		return
+	}
 
 	if err := h.store.UpdateAlertRule(r.Context(), &rule); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -197,4 +224,36 @@ func (h *RulesHandler) Toggle(w http.ResponseWriter, r *http.Request) {
 		"id":      id,
 		"enabled": payload.Enabled,
 	})
+}
+
+func validateRuleFields(rule *models.AlertRule) string {
+	switch rule.Operator {
+	case ">", ">=", "<", "<=", "==", "!=":
+	default:
+		return "invalid operator: must be one of >, >=, <, <=, ==, !="
+	}
+
+	switch rule.Severity {
+	case models.SeverityCritical, models.SeverityWarning, models.SeverityInfo:
+	default:
+		return "invalid severity: must be CRITICAL, WARNING, or INFO"
+	}
+
+	switch rule.RuleClass {
+	case models.RuleClassSingleReading, models.RuleClassTimeWindow:
+	default:
+		return "invalid rule_class: must be SINGLE_READING or TIME_WINDOW"
+	}
+
+	if rule.RuleClass == models.RuleClassTimeWindow {
+		switch rule.WindowAggregation {
+		case models.AggAvg, models.AggMax, models.AggMin, models.AggCount:
+		default:
+			return "invalid window_aggregation: must be AVG, MAX, MIN, or COUNT"
+		}
+		if rule.WindowDurationSeconds < 5 || rule.WindowDurationSeconds > 86400 {
+			return "window_duration_seconds must be between 5 and 86400"
+		}
+	}
+	return ""
 }

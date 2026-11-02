@@ -35,6 +35,9 @@ func (h *DashboardHandler) ListAuditLogs(w http.ResponseWriter, r *http.Request)
 			limit = l
 		}
 	}
+	if limit > 500 {
+		limit = 500
+	}
 
 	logs, err := h.store.ListAuditLogs(r.Context(), entityType, entityID, limit)
 	if err != nil {

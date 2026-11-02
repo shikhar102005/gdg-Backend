@@ -27,6 +27,8 @@ func NewRouter(c *ServerComponents) http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
+	r.Use(SecurityHeadersMiddleware)
+	r.Use(LimitBodySize(2 * 1024 * 1024))
 	r.Use(LoggingMiddleware)
 	r.Use(CORSMiddleware(c.Config.CORSAllowedOrigins))
 
@@ -52,7 +54,7 @@ func NewRouter(c *ServerComponents) http.Handler {
 
 		// Sensor Ingestion (Burst optimized)
 		r.Post("/readings", ingestHandler.IngestSingle)
-		r.Post("/readings/batch", ingestHandler.IngestBatch)
+		r.With(LimitBodySize(10 * 1024 * 1024)).Post("/readings/batch", ingestHandler.IngestBatch)
 
 		// Trends & analytics
 		r.Get("/readings/trends", readingsHandler.GetTrends)
