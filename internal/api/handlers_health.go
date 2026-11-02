@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"context"
 	"net/http"
 	"time"
@@ -31,9 +32,10 @@ func (h *HealthHandler) Readyz(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := h.store.Ping(ctx); err != nil {
+		log.Printf("[health] Readyz ping failed: %v", err)
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{
 			"status":    "unready",
-			"error":     err.Error(),
+			"error":     "database connection unavailable",
 			"timestamp": time.Now().UTC().Format(time.RFC3339),
 		})
 		return

@@ -231,3 +231,82 @@ func TestAlertRulesAndLifecycle(t *testing.T) {
 		t.Fatalf("failed getting dashboard summary: %d", rr.Code)
 	}
 }
+
+func TestSecurityHardening(t *testing.T) {
+	router, authSvc, _ := setupTestServer()
+	token, _, _, _ := authSvc.AuthenticateOrganizer("organizer@campus.edu", "CampusOrganizerSecure2026!")
+
+	// 1. Verify Defensive Security Headers
+	req, _ := http.NewRequest(http.MethodGet, "/healthz", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Header().Get("X-Content-Type-Options") != "nosniff" {
+		t.Errorf("expected nosniff header, got %s", rr.Header().Get("X-Content-Type-Options"))
+	}
+	if rr.Header().Get("X-Frame-Options") != "DENY" {
+		t.Errorf("expected X-Frame-Options DENY, got %s", rr.Header().Get("X-Frame-Options"))
+	}
+
+	// 2. Verify CORS credential protection on wildcard
+	req, _ = http.NewRequest(http.MethodGet, "/api/v1/sensors", nil)
+	req.Header.Set("Origin", "https://untrusted-site.com")
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	// Since config default is "*", credentials must NOT be true
+	if rr.Header().Get("Access-Control-Allow-Credentials") == "true" && rr.Header().Get("Access-Control-Allow-Origin") == "https://untrusted-site.com" {
+		t.Errorf("CORS vulnerability: reflected untrusted origin with allow-credentials=true")
+	}
+
+	// 3. Verify Oversized Request Body Rejection (DoS protection)
+	hugePayload := bytes.Repeat([]byte("A"), 3*1024*1024) // 3MB > 2MB limit
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(hugePayload))
+	req.Header.Set("Content-Type", "application/json")
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for oversized payload, got %d", rr.Code)
+	}
+
+	// 4. Verify Rule Validation Rejects Malicious/Invalid Operators
+	badRule := map[string]interface{}{
+		"name":       "SQL Injection Attempt Rule",
+		"metric":     "temperature",
+		"operator":   "DROP TABLE sensors; --",
+		"threshold":  100.0,
+		"rule_class": "single_reading",
+		"severity":   "warning",
+	}
+	badRuleJSON, _ := json.Marshal(badRule)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/rules", bytes.NewBuffer(badRuleJSON))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for invalid operator rule, got %d", rr.Code)
+	}
+
+	// 5. Verify Sensor APIKeyHash Tamper Prevention
+	sensorReq := map[string]interface{}{
+		"id":           "test-tamper-sensor",
+		"name":         "Tamper Sensor",
+		"sensor_type":  "temperature",
+		"api_key_hash": "malicious_injected_hash",
+	}
+	sensorJSON, _ := json.Marshal(sensorReq)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/sensors", bytes.NewBuffer(sensorJSON))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected 200 OK creating sensor, got %d", rr.Code)
+	}
+	var createdSen models.Sensor
+	_ = json.NewDecoder(rr.Body).Decode(&createdSen)
+	if createdSen.APIKeyHash != "" {
+		t.Errorf("expected APIKeyHash to be sanitized/empty, got %s", createdSen.APIKeyHash)
+	}
+}

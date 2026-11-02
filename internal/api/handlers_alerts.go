@@ -32,6 +32,9 @@ func (h *AlertHandler) List(w http.ResponseWriter, r *http.Request) {
 			limit = l
 		}
 	}
+	if limit > 500 {
+		limit = 500
+	}
 
 	offset := 0
 	if oStr := r.URL.Query().Get("offset"); oStr != "" {

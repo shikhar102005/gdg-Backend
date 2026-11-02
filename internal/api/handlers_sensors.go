@@ -55,6 +55,9 @@ func (h *SensorHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 			limit = l
 		}
 	}
+	if limit > 500 {
+		limit = 500
+	}
 
 	var since *time.Time
 	if sinceStr := r.URL.Query().Get("since"); sinceStr != "" {
@@ -102,6 +105,8 @@ func (h *SensorHandler) CreateOrUpdate(w http.ResponseWriter, r *http.Request) {
 	if sen.Status == "" {
 		sen.Status = models.SensorStatusActive
 	}
+	// Sanitize to prevent caller from tampering with internal sensor api key hashes
+	sen.APIKeyHash = ""
 
 	if err := h.store.UpsertSensor(r.Context(), &sen); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())

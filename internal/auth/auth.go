@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/subtle"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -99,14 +100,20 @@ func (s *AuthService) ValidateToken(tokenString string) (*OrganizerClaims, error
 
 // AuthenticateOrganizer validates login credentials and returns token
 func (s *AuthService) AuthenticateOrganizer(email, password string) (string, time.Time, UserRole, error) {
-	if email == s.adminEmail && password == s.adminPass {
+	adminEmailMatch := subtle.ConstantTimeCompare([]byte(email), []byte(s.adminEmail)) == 1
+	adminPassMatch := subtle.ConstantTimeCompare([]byte(password), []byte(s.adminPass)) == 1
+	if adminEmailMatch && adminPassMatch {
 		token, exp, err := s.GenerateOrganizerToken("org-admin-1", email, RoleAdmin)
 		return token, exp, RoleAdmin, err
 	}
-	if email == s.viewerEmail && password == s.viewerPass {
+
+	viewerEmailMatch := subtle.ConstantTimeCompare([]byte(email), []byte(s.viewerEmail)) == 1
+	viewerPassMatch := subtle.ConstantTimeCompare([]byte(password), []byte(s.viewerPass)) == 1
+	if viewerEmailMatch && viewerPassMatch {
 		token, exp, err := s.GenerateOrganizerToken("org-viewer-1", email, RoleViewer)
 		return token, exp, RoleViewer, err
 	}
+
 	return "", time.Time{}, "", errors.New("invalid email or password")
 }
 

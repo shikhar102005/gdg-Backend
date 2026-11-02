@@ -41,28 +41,63 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// SecurityHeadersMiddleware adds OWASP defensive security headers
+func SecurityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// LimitBodySize limits the max bytes read from request body to prevent DoS
+func LimitBodySize(maxBytes int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Body != nil {
+				r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// CORSMiddleware protects against insecure wildcard credential reflection (CWE-942)
 func CORSMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
-			allowed := false
+			if origin == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			isAllowed := false
+			isWildcard := false
 
 			for _, o := range allowedOrigins {
-				if o == "*" || o == origin {
-					allowed = true
+				if o == "*" {
+					isWildcard = true
+					break
+				}
+				if o == origin {
+					isAllowed = true
 					break
 				}
 			}
 
-			if allowed && origin != "" {
+			if isAllowed {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
-			} else if allowed {
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			} else if isWildcard {
+				// With wildcard, credentials MUST NOT be allowed to prevent CORS credential leakage
 				w.Header().Set("Access-Control-Allow-Origin", "*")
 			}
 
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token, X-Sensor-Key")
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusOK)

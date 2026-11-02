@@ -30,12 +30,28 @@ func (h *ReadingsHandler) GetTrends(w http.ResponseWriter, r *http.Request) {
 			duration = d
 		}
 	}
+	// Bound duration to prevent database exhaustion
+	if duration > 90*24*time.Hour {
+		duration = 90 * 24 * time.Hour
+	}
 
 	bucketSize := 1 * time.Minute
 	if bStr := r.URL.Query().Get("bucket"); bStr != "" {
 		if b, err := time.ParseDuration(bStr); err == nil && b > 0 {
 			bucketSize = b
 		}
+	}
+	// Enforce sane bucket bounds
+	if bucketSize < 10*time.Second {
+		bucketSize = 10 * time.Second
+	}
+	if bucketSize > 24*time.Hour {
+		bucketSize = 24 * time.Hour
+	}
+
+	// Cap data points count to prevent runaway aggregation queries
+	if duration/bucketSize > 3000 {
+		bucketSize = duration / 3000
 	}
 
 	points, err := h.store.GetMetricTrends(r.Context(), metric, sensorID, building, duration, bucketSize)
