@@ -34,3 +34,7 @@ Thumbs.db
 *.session.*
 session_history.*
 
+
+# Graphify local environment files
+graphify-out/.graphify_python
+graphify-out/.graphify_root
